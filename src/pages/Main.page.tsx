@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { FC } from 'react';
 import { Row, Col, Card } from 'antd';
 import styled from 'styled-components';
 import Canvas from 'components/Main/Canvas';
@@ -11,25 +11,31 @@ const Container = styled.div`
   padding: 12px;
 `;
 
-interface ListRefObject {
-  merge: () => void;
-}
-
-const MainPage = () => {
-  const listRef = useRef<ListRefObject>(null);
-  useEffect(() => {}, []);
-
+const MainPage: FC = () => {
   return (
     <Container>
       <Row gutter={[16, 0]}>
         <Col xs={24} sm={24} md={24} lg={16} xl={16} xxl={16}>
-          <Card style={{ height: '97vh' }}>
+          <Card
+            bodyStyle={{
+              display: 'flex',
+              flex: 1,
+              width: '100%',
+              height: '97vh'
+            }}
+          >
             <Canvas />
           </Card>
         </Col>
         <Col xs={24} sm={24} md={24} lg={8} xl={8} xxl={8}>
-          <Card bodyStyle={{ height: '97vh' }}>
-            <List ref={listRef} />
+          <Card
+            bodyStyle={{
+              display: 'flex',
+              flex: 1,
+              height: '97vh'
+            }}
+          >
+            <List />
           </Card>
         </Col>
       </Row>
