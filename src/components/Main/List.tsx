@@ -1,14 +1,7 @@
-import React, {
-  useState,
-  useEffect,
-  forwardRef,
-  ForwardRefRenderFunction,
-  useImperativeHandle
-} from 'react';
+import React, { FC, useRef } from 'react';
 import styled from 'styled-components';
-import { Button, Space } from 'antd';
-import { observer } from 'mobx-react';
-import { useStore } from 'hooks/useStore';
+import PolygonList from 'components/Main/PolygonList';
+import ActionButtons from 'components/Main/ActionButtons';
 
 const Container = styled.div`
   display: flex;
@@ -20,53 +13,52 @@ const Container = styled.div`
 
 const ListArea = styled.div`
   width: 100%;
-  min-height: 600px;
+  display: flex;
+  flex: 4;
 `;
 const ButtonArea = styled.div`
   width: 100%;
+  display: flex;
+  flex: 1;
   /* flex-direction: column; */
 `;
 
-interface Handler {
+interface PolygonListRefObject {
   merge(): void;
+  delete(): void;
+  export(): void;
 }
 
-interface Props {}
+const List: FC = () => {
+  const PolygonListRef = useRef<PolygonListRefObject>(null);
 
-const List: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
-  const [loading, setLoading] = useState(false);
-  const { drawItems } = useStore('canvasStore');
-  const fullWidth = { width: '100%' };
+  const handleDelete = () => {
+    if (PolygonListRef) PolygonListRef.current?.delete();
+  };
 
-  // 부모요소에서 자식요소의 함수 실행
-  useImperativeHandle(ref, () => ({
-    merge: () => {
-      console.log('useImpreative merge draw()');
-    }
-  }));
+  const handleMerge = () => {
+    if (PolygonListRef) PolygonListRef.current?.merge();
+  };
 
-  useEffect(() => {
-    console.log('---> didmount List component');
-    console.log('---> store test : ', drawItems);
-    return () => {
-      console.log('---> didmount List component');
-    };
-  }, []);
+  const handleExport = () => {
+    if (PolygonListRef) PolygonListRef.current?.export();
+  };
 
   return (
     <Container>
       <ListArea>
-        <p>{'<List Area />'}</p>
+        <PolygonList ref={PolygonListRef} />
       </ListArea>
 
       <ButtonArea>
-        <Space direction="vertical" style={fullWidth}>
-          <Button style={fullWidth}>Merge Selected</Button>
-          <Button style={fullWidth}>Export All</Button>
-        </Space>
+        <ActionButtons
+          handleDelete={handleDelete}
+          handleMerge={handleMerge}
+          handleExport={handleExport}
+        />
       </ButtonArea>
     </Container>
   );
 };
 
-export default observer(forwardRef(List));
+export default List;
