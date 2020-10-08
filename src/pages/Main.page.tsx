@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useRef } from 'react';
 import { Row, Col, Card } from 'antd';
 import styled from 'styled-components';
 import Canvas from 'components/Main/Canvas';
@@ -11,7 +11,18 @@ const Container = styled.div`
   padding: 12px;
 `;
 
+interface CanvasRefObject {
+  merge(): void;
+}
+
 const MainPage: FC = () => {
+  // 자식요소인 List 컴포넌트에 콜백함수를 props를 넘기고
+  // 그 콜백함수를 실행 할 시 Canvas Ref 에 useImperativeHandle로 Canvas 컴포넌트 내부에서 실행한다.
+  const CanvasRef = useRef<CanvasRefObject>(null);
+  const mergeCallback = () => {
+    CanvasRef.current?.merge();
+  };
+
   return (
     <Container>
       <Row gutter={[16, 0]}>
@@ -24,7 +35,7 @@ const MainPage: FC = () => {
               height: '97vh'
             }}
           >
-            <Canvas />
+            <Canvas ref={CanvasRef} />
           </Card>
         </Col>
         <Col xs={24} sm={24} md={24} lg={8} xl={8} xxl={8}>
@@ -35,7 +46,7 @@ const MainPage: FC = () => {
               height: '97vh'
             }}
           >
-            <List />
+            <List mergeAct={mergeCallback} />
           </Card>
         </Col>
       </Row>

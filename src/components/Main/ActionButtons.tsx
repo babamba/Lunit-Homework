@@ -34,7 +34,12 @@ const ActionButtons: FC<Props> = (props: Props) => {
       >
         Merge Selected
       </Button>
-      <Button icon={<ExportOutlined />} onClick={() => handleExport()} style={{ width: '100%' }}>
+      <Button
+        type="primary"
+        icon={<ExportOutlined />}
+        onClick={() => handleExport()}
+        style={{ width: '100%' }}
+      >
         Export All
       </Button>
     </Space>

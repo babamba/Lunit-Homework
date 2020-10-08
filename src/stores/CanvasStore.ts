@@ -4,6 +4,8 @@ import RootStoreModel from './index';
 interface Polygon {
   key: number;
   lines: Coordinate[];
+  moves: Coordinate[];
+  isMerged: boolean;
 }
 
 type Coordinate = {

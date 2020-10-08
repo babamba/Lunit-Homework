@@ -15,6 +15,7 @@ const ListArea = styled.div`
   width: 100%;
   display: flex;
   flex: 4;
+  overflow-y: scroll;
 `;
 const ButtonArea = styled.div`
   width: 100%;
@@ -24,25 +25,22 @@ const ButtonArea = styled.div`
 `;
 
 interface PolygonListRefObject {
-  merge(): void;
+  merge(mergeAct: Function): void;
   delete(): void;
   export(): void;
 }
 
-const List: FC = () => {
+interface Props {
+  mergeAct: Function;
+}
+
+const List: FC<Props> = (props: Props) => {
+  const { mergeAct } = props;
   const PolygonListRef = useRef<PolygonListRefObject>(null);
 
-  const handleDelete = () => {
-    if (PolygonListRef) PolygonListRef.current?.delete();
-  };
-
-  const handleMerge = () => {
-    if (PolygonListRef) PolygonListRef.current?.merge();
-  };
-
-  const handleExport = () => {
-    if (PolygonListRef) PolygonListRef.current?.export();
-  };
+  const handleDelete = () => PolygonListRef.current?.delete();
+  const handleExport = () => PolygonListRef.current?.export();
+  const handleMerge = () => PolygonListRef.current?.merge(mergeAct);
 
   return (
     <Container>
