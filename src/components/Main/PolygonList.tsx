@@ -16,12 +16,6 @@ import { toJS } from 'mobx';
 const CheckTextBox = styled.span`
   padding-left: 12px;
 `;
-const EmptyBox = styled(Empty)`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-`;
 
 interface Handler {
   merge(): void;
@@ -112,7 +106,15 @@ const PolygonList: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
 
   return (
     <Checkbox.Group value={toJS(selectItems)} style={{ width: '100%' }} onChange={onHandleChange}>
-      <Row gutter={[0, 16]}>{drawItems.length > 0 ? renderItems() : <EmptyBox />}</Row>
+      <Row gutter={[0, 16]}>
+        {drawItems.length > 0 ? (
+          renderItems()
+        ) : (
+          <Col span={24}>
+            <Empty description="저장된 항목이 없습니다." />
+          </Col>
+        )}
+      </Row>
     </Checkbox.Group>
   );
 };
