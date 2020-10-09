@@ -3,7 +3,8 @@ import { useWindowWidth, useWindowHeight } from '@react-hook/window-size';
 import styled from 'styled-components';
 import { observer } from 'mobx-react';
 import { useStore } from 'hooks/useStore';
-import { Coordinate } from 'interface/polygon';
+import { Polygon, Coordinate } from 'interface/polygon';
+import { toJS } from 'mobx';
 
 const Container = styled.div`
   display: flex;
@@ -12,7 +13,7 @@ const Container = styled.div`
 `;
 
 const Canvas: FC = () => {
-  const { addPolygon, getMaxIndex, drawItems } = useStore('canvasStore');
+  const { addPolygon, getMaxIndex, drawItems, selectItems } = useStore('canvasStore');
   const browserWidth = useWindowWidth();
   const browserHeight = useWindowHeight();
 
@@ -89,10 +90,8 @@ const Canvas: FC = () => {
       if (drawItems.length > 0) {
         for (let i = 0; i < drawItems.length; i++) {
           context.beginPath();
-
           if (drawItems[i].isMerged) {
-            console.log('merged item');
-            context.strokeStyle = 'green';
+            context.strokeStyle = '#5634eb';
             context.fillStyle = '#FFFFFF';
             for (let j = 0; j < drawItems[i].lines.length; j++) {
               context.moveTo(drawItems[i].moves[j].x, drawItems[i].moves[j].y);
@@ -105,8 +104,7 @@ const Canvas: FC = () => {
               context.lineTo(drawItems[i].lines[j].x, drawItems[i].lines[j].y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
             }
             context.fill(); //배경을 넣을때는 moveTo를 할경우 경로가 끊어지기때문에 넣지않음.
-
-            context.globalCompositeOperation = 'xor';
+            context.globalCompositeOperation = 'source-over'; // reset
 
             console.log('merged draw end');
           } else {
@@ -119,6 +117,7 @@ const Canvas: FC = () => {
             }
             context.globalCompositeOperation = 'source-over';
             context.stroke(); // 그린다.
+
             console.log('stroke draw end');
           }
         }
@@ -180,6 +179,47 @@ const Canvas: FC = () => {
     if (!canvasRef.current) return;
     checkResponsive();
   }, [browserWidth, browserHeight]);
+
+  const selectedItemCheck = () => {
+    const selectedArr: Polygon[] = toJS(drawItems).filter(
+      (item: Polygon) => selectItems.indexOf(item.key) >= 0,
+    );
+    const deselectedArr: Polygon[] = toJS(drawItems).filter(
+      (item: Polygon) => selectItems.indexOf(item.key) < 0,
+    );
+
+    for (const select of selectedArr) {
+      makeArc('#34eb64', select.lines[0].x, select.lines[0].y);
+    }
+    for (const deselect of deselectedArr) {
+      makeArc('#FFFFFF', deselect.lines[0].x, deselect.lines[0].y);
+    }
+  };
+
+  const clearItemCheck = () => {
+    for (const item of drawItems) {
+      makeArc('#FFFFFF', item.lines[0].x, item.lines[0].y);
+    }
+  };
+
+  const makeArc = (color: string, x: number, y: number) => {
+    if (!canvasRef.current) return;
+    const canvas: HTMLCanvasElement = canvasRef.current;
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.beginPath();
+      context.moveTo(x - 40, y - 40);
+      context.arc(x - 40, y - 40, 4, 0, 2 * Math.PI, false);
+      context.fillStyle = color;
+      context.fill();
+      context.closePath();
+    }
+  };
+
+  useEffect(() => {
+    if (selectItems.length > 0) selectedItemCheck();
+    else clearItemCheck();
+  }, [selectItems]);
 
   return (
     <Container ref={containerRef}>
