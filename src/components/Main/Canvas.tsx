@@ -3,16 +3,13 @@ import React, {
   useRef,
   useState,
   useEffect,
-  useCallback,
-  forwardRef,
-  ForwardRefRenderFunction,
-  useImperativeHandle
+  useCallback
 } from 'react';
 import { useWindowWidth, useWindowHeight } from '@react-hook/window-size';
 import styled from 'styled-components';
 import { observer } from 'mobx-react';
-import { toJS } from 'mobx';
 import { useStore } from 'hooks/useStore';
+import { Coordinate } from 'interface/polygon'
 
 const Container = styled.div`
   display: flex;
@@ -20,38 +17,20 @@ const Container = styled.div`
   cursor: pointer;
 `;
 
-interface Handler {
-  merge(): void;
-}
-
-interface Props {}
-interface Polygon {
-  key: number;
-  lines: Coordinate[];
-  moves: Coordinate[];
-  isMerged: boolean;
-}
-
-type Coordinate = {
-  x: number;
-  y: number;
-};
-
-const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
-  const { addPolygon, deletePolygon, drawItems, selectItems } = useStore('canvasStore');
-
+const Canvas:FC = () => {
+  const { addPolygon, getMaxIndex, drawItems } = useStore('canvasStore');
   const browserWidth = useWindowWidth();
   const browserHeight = useWindowHeight();
-
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasWidth, setCanvasWidth] = useState<number | undefined>(600);
   const [canvasHeight, setCanvasHeight] = useState<number | undefined>(600);
 
   const [isPainting, setIsPainting] = useState<boolean>(false);
-  const [mousePosition, setMousePosition] = useState<Coordinate | undefined>(undefined);
-  const [lines, setLines] = useState<Coordinate[]>([]);
-  const [moves, setMoves] = useState<Coordinate[]>([]);
+  const [mousePosition, setMousePosition] = useState<Coordinate | undefined>(undefined); 
+  const [lines, setLines] = useState<Coordinate[]>([]); // 그려지는 마지막 좌표값(End X, Y)
+  const [moves, setMoves] = useState<Coordinate[]>([]); // 마우스 움직임 값(start X, Y )
 
   //MouseDown Event Listener에 사용될 callback 함수
   const startPaint = useCallback((event: MouseEvent) => {
@@ -92,7 +71,7 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
       console.log('test @@ : ', moves[moves.length - 1].x, moves[moves.length - 1].y);
       console.log('test @@ : ', lines[lines.length - 1].x, lines[lines.length - 1].y);
       addPolygon({
-        key: maxIndex(),
+        key: getMaxIndex(),
         moves: [...moves, { x: lines[lines.length - 1].x, y: lines[lines.length - 1].y }],
         lines: [...lines, { x: lines[0].x, y: lines[0].y }], // 끝선과 시작선을 합쳐준다.
         isMerged: false
@@ -151,16 +130,6 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
     }
   };
 
-  // 아이템을 추가할때 마다, 리스트에 key의 최대값을 찾아 ++값으로 리턴.
-  const maxIndex = (): number => {
-    if (drawItems.length > 0) {
-      const max = Math.max(...drawItems.map(o => o.key));
-      return max + 1;
-    } else {
-      return 0;
-    }
-  };
-
   // canvas ref에 이벤트 리스너 등록
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -216,51 +185,6 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
     setCanvasWidth(containerRef.current.offsetWidth);
   };
 
-  // 2개 이상의 Line 목록을 병합한다.
-  const mergeFindItems = async () => {
-    console.log('----> [Canvas] findMergeItems ');
-    const filterArr: Polygon[] = toJS(drawItems).filter(
-      (item: Polygon) => selectItems.indexOf(item.key) >= 0
-    );
-    console.log('----> [Canvas] filter Items : ', filterArr);
-
-    if (!canvasRef.current) return;
-    const canvas: HTMLCanvasElement = canvasRef.current;
-    const context = canvas.getContext('2d');
-
-    if (filterArr.length > 1) {
-      if (context) {
-        let mergeLines = [];
-        let mergeMoves = [];
-        // 선택 아이템들 목록의 line 배열 반복에 따른 새로운 line 배열로 구성
-        for (let i = 0; i < filterArr.length; i++) {
-          for (let j = 0; j < filterArr[i].lines.length; j++) {
-            mergeLines.push(filterArr[i].lines[j]);
-          }
-        }
-
-        for (let i = 0; i < filterArr.length; i++) {
-          for (let j = 0; j < filterArr[i].moves.length; j++) {
-            mergeMoves.push(filterArr[i].moves[j]);
-          }
-        }
-
-        await deletePolygon(toJS(selectItems) as number[]); // merge 선택요소 제거
-        // 병합 아이템 등록.
-        await addPolygon({
-          key: maxIndex(),
-          moves: mergeMoves,
-          lines: mergeLines,
-          isMerged: true
-        });
-      }
-    }
-  };
-
-  useImperativeHandle(ref, () => ({
-    merge: () => mergeFindItems()
-  }));
-
   useEffect(() => {
     if (!canvasRef.current) return;
     checkResponsive();
@@ -273,4 +197,4 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
   );
 };
 
-export default observer(forwardRef(Canvas));
+export default observer(Canvas);

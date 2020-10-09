@@ -25,22 +25,16 @@ const ButtonArea = styled.div`
 `;
 
 interface PolygonListRefObject {
-  merge(mergeAct: Function): void;
+  merge(): void;
   delete(): void;
   export(): void;
 }
 
-interface Props {
-  mergeAct: Function;
-}
-
-const List: FC<Props> = (props: Props) => {
-  const { mergeAct } = props;
+const List: FC = () => {
   const PolygonListRef = useRef<PolygonListRefObject>(null);
-
   const handleDelete = () => PolygonListRef.current?.delete();
   const handleExport = () => PolygonListRef.current?.export();
-  const handleMerge = () => PolygonListRef.current?.merge(mergeAct);
+  const handleMerge = () => PolygonListRef.current?.merge();
 
   return (
     <Container>
