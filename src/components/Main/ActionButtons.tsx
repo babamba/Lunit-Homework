@@ -1,9 +1,10 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import { DeleteOutlined, MergeCellsOutlined, ExportOutlined } from '@ant-design/icons';
 import { Button, Space } from 'antd';
 import { observer } from 'mobx-react';
 import { toJS } from 'mobx';
 import { useStore } from 'hooks/useStore';
+
 interface Props {
   handleDelete: Function;
   handleMerge: Function;

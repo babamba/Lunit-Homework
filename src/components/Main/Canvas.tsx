@@ -1,15 +1,9 @@
-import React, {
-  FC,
-  useRef,
-  useState,
-  useEffect,
-  useCallback
-} from 'react';
+import React, { FC, useRef, useState, useEffect, useCallback } from 'react';
 import { useWindowWidth, useWindowHeight } from '@react-hook/window-size';
 import styled from 'styled-components';
 import { observer } from 'mobx-react';
 import { useStore } from 'hooks/useStore';
-import { Coordinate } from 'interface/polygon'
+import { Coordinate } from 'interface/polygon';
 
 const Container = styled.div`
   display: flex;
@@ -17,18 +11,18 @@ const Container = styled.div`
   cursor: pointer;
 `;
 
-const Canvas:FC = () => {
+const Canvas: FC = () => {
   const { addPolygon, getMaxIndex, drawItems } = useStore('canvasStore');
   const browserWidth = useWindowWidth();
   const browserHeight = useWindowHeight();
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasWidth, setCanvasWidth] = useState<number | undefined>(600);
   const [canvasHeight, setCanvasHeight] = useState<number | undefined>(600);
 
   const [isPainting, setIsPainting] = useState<boolean>(false);
-  const [mousePosition, setMousePosition] = useState<Coordinate | undefined>(undefined); 
+  const [mousePosition, setMousePosition] = useState<Coordinate | undefined>(undefined);
   const [lines, setLines] = useState<Coordinate[]>([]); // 그려지는 마지막 좌표값(End X, Y)
   const [moves, setMoves] = useState<Coordinate[]>([]); // 마우스 움직임 값(start X, Y )
 
@@ -52,7 +46,7 @@ const Canvas:FC = () => {
         }
       }
     },
-    [isPainting, mousePosition]
+    [isPainting, mousePosition],
   );
 
   //Mouse Up&Leave Event Listener에 사용될 callback 함수
@@ -63,18 +57,13 @@ const Canvas:FC = () => {
   };
 
   const handleFinsh = async () => {
-    console.log('----> [Canvas] draw finish ! ');
-    console.info('----> [Canvas] draw lines : ', lines.length);
-    console.info('----> [Canvas] draw moves : ', moves.length);
     if (!canvasRef.current || lines.length === 0) return;
     if (canvasRef.current.getContext('2d')) {
-      console.log('test @@ : ', moves[moves.length - 1].x, moves[moves.length - 1].y);
-      console.log('test @@ : ', lines[lines.length - 1].x, lines[lines.length - 1].y);
       addPolygon({
         key: getMaxIndex(),
         moves: [...moves, { x: lines[lines.length - 1].x, y: lines[lines.length - 1].y }],
         lines: [...lines, { x: lines[0].x, y: lines[0].y }], // 끝선과 시작선을 합쳐준다.
-        isMerged: false
+        isMerged: false,
       });
       setLines([]); // state 초기화
       setMoves([]); // state 초기화
@@ -103,14 +92,13 @@ const Canvas:FC = () => {
             console.log('merged item');
             context.strokeStyle = 'green';
             context.fillStyle = '#FFFFFF';
-
             for (let j = 0; j < drawItems[i].lines.length; j++) {
               // observable 목록안의 i 번째 line path을 반복
               // moveTo 적용시  선 지점에 대한 참조가 끊어 지기 때문에 배경이 안들어감.
               // context.moveTo(drawItems[i].moves[j].x, drawItems[i].moves[j].y);
               context.lineTo(drawItems[i].lines[j].x, drawItems[i].lines[j].y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
             }
-
+            context.globalCompositeOperation = 'xor';
             context.stroke(); // 그린다.
             context.fill();
             console.log('merged draw end');
@@ -119,9 +107,10 @@ const Canvas:FC = () => {
             context.strokeStyle = 'black';
             for (let j = 0; j < drawItems[i].lines.length; j++) {
               // observable 목록안의 i 번째 line path을 반복
-              context.moveTo(drawItems[i].moves[j].x, drawItems[i].moves[j].y);
+              // context.moveTo(drawItems[i].moves[j].x, drawItems[i].moves[j].y);
               context.lineTo(drawItems[i].lines[j].x, drawItems[i].lines[j].y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
             }
+            context.globalCompositeOperation = 'source-over';
             context.stroke(); // 그린다.
             console.log('stroke draw end');
           }
@@ -148,7 +137,7 @@ const Canvas:FC = () => {
     if (!canvasRef.current) return;
     return {
       x: event.pageX - canvasRef.current.offsetLeft,
-      y: event.pageY - canvasRef.current.offsetTop
+      y: event.pageY - canvasRef.current.offsetTop,
     };
   };
 
@@ -158,18 +147,13 @@ const Canvas:FC = () => {
     const canvas: HTMLCanvasElement = canvasRef.current;
     const context = canvas.getContext('2d');
     if (context) {
-      context.strokeStyle = '#000000';
+      context.globalCompositeOperation = 'source-over';
+      context.strokeStyle = 'black';
       context.beginPath(); //새 로운 경로를 만듭니다. 경로가 생성됬다면, 이후 그리기 명령들은 경로를 구성하고 만드는데 사용하게 됩니다.
       context.moveTo(originalMousePosition.x, originalMousePosition.y); // 경로에 담긴 도형은 그대로 두고, 점 (x,y)를 새 시작점으로 삽입한다.
       context.lineTo(newMousePosition.x, newMousePosition.y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
       // context.closePath(); //현재 하위 경로의 시작 부분과 연결된 직선을 추가합니다.
       context.stroke(); // 그린다.
-      console.log(
-        'originalMousePosition.x, originalMousePosition.y',
-        originalMousePosition.x,
-        originalMousePosition.y
-      );
-      console.log('newMousePosition.x, newMousePosition.y', newMousePosition.x, newMousePosition.y);
       await setData(newMousePosition, originalMousePosition);
     }
   };
