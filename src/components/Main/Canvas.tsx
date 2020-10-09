@@ -29,6 +29,7 @@ const Canvas: FC = () => {
   //MouseDown Event Listener에 사용될 callback 함수
   const startPaint = useCallback((event: MouseEvent) => {
     const coordinates = getCoordinates(event);
+
     if (coordinates) {
       setMousePosition(coordinates);
       setIsPainting(true);
@@ -40,6 +41,7 @@ const Canvas: FC = () => {
     async (event: MouseEvent) => {
       if (isPainting) {
         const newMousePosition = getCoordinates(event);
+
         if (mousePosition && newMousePosition) {
           await drawLine(mousePosition, newMousePosition);
           setMousePosition(newMousePosition);
@@ -61,8 +63,8 @@ const Canvas: FC = () => {
     if (canvasRef.current.getContext('2d')) {
       addPolygon({
         key: getMaxIndex(),
-        moves: [...moves, { x: lines[lines.length - 1].x, y: lines[lines.length - 1].y }],
-        lines: [...lines, { x: lines[0].x, y: lines[0].y }], // 끝선과 시작선을 합쳐준다.
+        moves: [...moves, { x: lines[lines.length - 1].x, y: lines[lines.length - 1].y }], // 마우스 마지막 포인트를 선 마지막 점 으로 추가.
+        lines: [...lines, { x: moves[0].x, y: moves[0].y }], // 끝선과 마우스 포인트 첫점을 합쳐준다.
         isMerged: false,
       });
       setLines([]); // state 초기화
@@ -93,21 +95,26 @@ const Canvas: FC = () => {
             context.strokeStyle = 'green';
             context.fillStyle = '#FFFFFF';
             for (let j = 0; j < drawItems[i].lines.length; j++) {
-              // observable 목록안의 i 번째 line path을 반복
-              // moveTo 적용시  선 지점에 대한 참조가 끊어 지기 때문에 배경이 안들어감.
+              context.moveTo(drawItems[i].moves[j].x, drawItems[i].moves[j].y);
+              context.lineTo(drawItems[i].lines[j].x, drawItems[i].lines[j].y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
+            }
+            context.stroke(); // 그린다.
+            context.globalCompositeOperation = 'destination-out';
+            for (let j = 0; j < drawItems[i].lines.length; j++) {
               // context.moveTo(drawItems[i].moves[j].x, drawItems[i].moves[j].y);
               context.lineTo(drawItems[i].lines[j].x, drawItems[i].lines[j].y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
             }
+            context.fill(); //배경을 넣을때는 moveTo를 할경우 경로가 끊어지기때문에 넣지않음.
+
             context.globalCompositeOperation = 'xor';
-            context.stroke(); // 그린다.
-            context.fill();
+
             console.log('merged draw end');
           } else {
             console.log('not merged item');
             context.strokeStyle = 'black';
             for (let j = 0; j < drawItems[i].lines.length; j++) {
               // observable 목록안의 i 번째 line path을 반복
-              // context.moveTo(drawItems[i].moves[j].x, drawItems[i].moves[j].y);
+              context.moveTo(drawItems[i].moves[j].x, drawItems[i].moves[j].y);
               context.lineTo(drawItems[i].lines[j].x, drawItems[i].lines[j].y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
             }
             context.globalCompositeOperation = 'source-over';
