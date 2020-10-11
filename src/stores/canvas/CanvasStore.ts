@@ -11,6 +11,7 @@ class CanvasStore {
   @observable drawItems: Polygon[] = [];
   @observable selectItems: number[] = [];
 
+  /** 초기 앱진입시 LocalStorage 탐색 후 store에 저장 */
   @action.bound
   async initStorage() {
     console.log('----> [Store] initStorage');
@@ -18,6 +19,7 @@ class CanvasStore {
     if (local) this.setDrawItems(JSON.parse(local) as Polygon[]);
   }
 
+  /** 도형 추가 Action */
   @action.bound
   async addPolygon(param: Polygon) {
     const local = localStorage.getItem('polygonList');
@@ -32,12 +34,13 @@ class CanvasStore {
     }
   }
 
+  /** 도형 삭제 Action */
   @action.bound
-  async deletePolygon(list: number[]) {
+  async deletePolygon() {
     const local = localStorage.getItem('polygonList');
     if (local) {
       const filterArr: Polygon[] = JSON.parse(local).filter(
-        (item: Polygon, idx: number) => list.indexOf(item.key) < 0,
+        (item: Polygon) => this.selectItems.indexOf(item.key) < 0,
       );
       localStorage.setItem('polygonList', JSON.stringify(filterArr));
       this.setDrawItems(filterArr);
@@ -45,6 +48,7 @@ class CanvasStore {
     }
   }
 
+  /** 도형 추가시 최대 index값을 구한다.  */
   @action.bound
   getMaxIndex() {
     // 아이템을 추가할때 마다, 리스트에 key의 최대값을 찾아 ++값으로 리턴.
@@ -57,14 +61,16 @@ class CanvasStore {
     }
   }
 
+  /** 도형 아이템 리스트 setter  */
   @action.bound
   setDrawItems(newList: Polygon[]) {
     this.drawItems = newList;
   }
 
+  /** 선택 리스트 setter  */
   @action.bound
-  setSelectedItem(list: number[]) {
-    this.selectItems = list;
+  setSelectedItem(newSelectList: number[]) {
+    this.selectItems = newSelectList;
   }
 }
 

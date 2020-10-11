@@ -21,7 +21,6 @@ const ButtonArea = styled.div`
   width: 100%;
   display: flex;
   flex: 1;
-  /* flex-direction: column; */
 `;
 
 interface PolygonListRefObject {
@@ -31,7 +30,7 @@ interface PolygonListRefObject {
 }
 
 const List: FC = () => {
-  const PolygonListRef = useRef<PolygonListRefObject>(null);
+  const PolygonListRef = useRef<PolygonListRefObject>(null); // 자식요소 구성요소에 접근하기위해 Ref 생성
   const handleDelete = () => PolygonListRef.current?.delete();
   const handleExport = () => PolygonListRef.current?.export();
   const handleMerge = () => PolygonListRef.current?.merge();

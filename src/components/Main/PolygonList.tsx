@@ -34,10 +34,11 @@ const PolygonList: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
     selectItems,
     setSelectedItem,
   } = useStore('canvasStore');
+
   // 부모요소에서 자식요소의 함수 실행
   useImperativeHandle(ref, () => ({
     merge: () => onHandleMerge(),
-    delete: async () => await deletePolygon(selectItems as number[]),
+    delete: async () => await deletePolygon(),
     export: () => {
       const temp = toJS(drawItems).map((item: Polygon) => item.lines);
       console.info('--- > [PolygonList]  Export All : ', temp);
@@ -66,7 +67,7 @@ const PolygonList: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
           mergeMoves.push(filterArr[i].moves[j]);
         }
       }
-      await deletePolygon(toJS(selectItems) as number[]); // merge 선택요소 제거
+      await deletePolygon(); // merge 선택요소 제거
       // 병합 아이템 등록.
       await addPolygon({
         key: getMaxIndex(),

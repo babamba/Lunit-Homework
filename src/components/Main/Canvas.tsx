@@ -14,8 +14,8 @@ const Container = styled.div`
 
 const Canvas: FC = () => {
   const { addPolygon, getMaxIndex, drawItems, selectItems } = useStore('canvasStore');
-  const browserWidth = useWindowWidth();
-  const browserHeight = useWindowHeight();
+  const browserWidth = useWindowWidth(); // 브라우저 리사이징 hook
+  const browserHeight = useWindowHeight(); // 브라우저 리사이징 hook
 
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -59,6 +59,7 @@ const Canvas: FC = () => {
     handleFinsh(); // 페인팅이 끝난 후 Store에 저장한다.
   };
 
+  // line draw가 끝난 후 저장된 line / move state 값을 저장액션(로컬스토리지 저장) 후 초기화한다.
   const handleFinsh = async () => {
     if (!canvasRef.current || lines.length === 0) return;
     if (canvasRef.current.getContext('2d')) {
@@ -73,6 +74,7 @@ const Canvas: FC = () => {
     }
   };
 
+  // Store의 Observable item이 변경(추가, 삭제) 될 시점마다 리스트를 캔버스에 그린다.
   useEffect(() => {
     redraw();
   }, [drawItems]);
@@ -91,6 +93,7 @@ const Canvas: FC = () => {
         for (let i = 0; i < drawItems.length; i++) {
           context.beginPath();
           if (drawItems[i].isMerged) {
+            // Merge 상태 아이템의 경우
             context.strokeStyle = '#5634eb';
             context.fillStyle = '#FFFFFF';
             for (let j = 0; j < drawItems[i].lines.length; j++) {
@@ -105,10 +108,8 @@ const Canvas: FC = () => {
             }
             context.fill(); //배경을 넣을때는 moveTo를 할경우 경로가 끊어지기때문에 넣지않음.
             context.globalCompositeOperation = 'source-over'; // reset
-
-            console.log('merged draw end');
           } else {
-            console.log('not merged item');
+            // Merge 상태가 아닌 아이템의 경우
             context.strokeStyle = 'black';
             for (let j = 0; j < drawItems[i].lines.length; j++) {
               // observable 목록안의 i 번째 line path을 반복
@@ -117,8 +118,6 @@ const Canvas: FC = () => {
             }
             context.globalCompositeOperation = 'source-over';
             context.stroke(); // 그린다.
-
-            console.log('stroke draw end');
           }
         }
       }
@@ -155,15 +154,15 @@ const Canvas: FC = () => {
     if (context) {
       context.globalCompositeOperation = 'source-over';
       context.strokeStyle = 'black';
-      context.beginPath(); //새 로운 경로를 만듭니다. 경로가 생성됬다면, 이후 그리기 명령들은 경로를 구성하고 만드는데 사용하게 됩니다.
+      context.beginPath(); //새로운 경로를 생성
       context.moveTo(originalMousePosition.x, originalMousePosition.y); // 경로에 담긴 도형은 그대로 두고, 점 (x,y)를 새 시작점으로 삽입한다.
       context.lineTo(newMousePosition.x, newMousePosition.y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
-      // context.closePath(); //현재 하위 경로의 시작 부분과 연결된 직선을 추가합니다.
       context.stroke(); // 그린다.
       await setData(newMousePosition, originalMousePosition);
     }
   };
 
+  // Line draw 값 저장.
   const setData = async (newMousePosition: Coordinate, originalMousePosition: Coordinate) => {
     setMoves([...moves, { x: originalMousePosition.x, y: originalMousePosition.y }]);
     setLines([...lines, { x: newMousePosition.x, y: newMousePosition.y }]);
@@ -202,6 +201,7 @@ const Canvas: FC = () => {
     }
   };
 
+  // 선택값 또는 선택하지않은값에 대한 표시 처리.
   const makeArc = (color: string, x: number, y: number) => {
     if (!canvasRef.current) return;
     const canvas: HTMLCanvasElement = canvasRef.current;
