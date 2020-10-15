@@ -1,7 +1,7 @@
-import React, { FC, useRef } from 'react';
-import styled from 'styled-components';
-import PolygonList from 'components/Main/PolygonList';
-import ActionButtons from 'components/Main/ActionButtons';
+import React, { FC } from "react";
+import styled from "styled-components";
+import PolygonList from "components/Main/PolygonList";
+import ActionButtons from "components/Main/ActionButtons";
 
 const Container = styled.div`
   display: flex;
@@ -23,30 +23,15 @@ const ButtonArea = styled.div`
   flex: 1;
 `;
 
-interface PolygonListRefObject {
-  merge(): void;
-  delete(): void;
-  export(): void;
-}
-
 const List: FC = () => {
-  const PolygonListRef = useRef<PolygonListRefObject>(null); // 자식요소 구성요소에 접근하기위해 Ref 생성
-  const handleDelete = () => PolygonListRef.current?.delete();
-  const handleExport = () => PolygonListRef.current?.export();
-  const handleMerge = () => PolygonListRef.current?.merge();
-
   return (
     <Container>
       <ListArea>
-        <PolygonList ref={PolygonListRef} />
+        <PolygonList />
       </ListArea>
 
       <ButtonArea>
-        <ActionButtons
-          handleDelete={handleDelete}
-          handleMerge={handleMerge}
-          handleExport={handleExport}
-        />
+        <ActionButtons />
       </ButtonArea>
     </Container>
   );

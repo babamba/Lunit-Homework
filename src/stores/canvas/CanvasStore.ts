@@ -72,6 +72,41 @@ class CanvasStore {
   setSelectedItem(newSelectList: number[]) {
     this.selectItems = newSelectList;
   }
+  @action.bound
+  async merge() {
+    const filterArr: Polygon[] = this.drawItems.filter(
+      (item: Polygon) => this.selectItems.indexOf(item.key) >= 0
+    );
+    if (filterArr.length > 1) {
+      let mergeLines = [];
+      let mergeMoves = [];
+      // 선택 아이템들 목록의 line 배열 반복에 따른 새로운 line 배열로 구성
+      for (let i = 0; i < filterArr.length; i++) {
+        for (let j = 0; j < filterArr[i].lines.length; j++) {
+          mergeLines.push(filterArr[i].lines[j]);
+        }
+      }
+
+      for (let i = 0; i < filterArr.length; i++) {
+        for (let j = 0; j < filterArr[i].moves.length; j++) {
+          mergeMoves.push(filterArr[i].moves[j]);
+        }
+      }
+      await this.deletePolygon(); // merge 선택요소 제거
+      // 병합 아이템 등록.
+      await this.addPolygon({
+        key: this.getMaxIndex(),
+        moves: mergeMoves,
+        lines: mergeLines,
+        isMerged: true,
+      });
+    }
+  }
+  @action.bound
+  exportAll() {
+    const temp = this.drawItems.map((item: Polygon) => item.lines);
+    console.info("--- > [PolygonList]  Export All : ", temp);
+  }
 }
 
 export default CanvasStore;
