@@ -1392,6 +1392,18 @@
     "@types/yargs" "^15.0.0"
     chalk "^3.0.0"
 
+"@lunit/is-complex-polygon@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@lunit/is-complex-polygon/-/is-complex-polygon-1.0.4.tgz#cfe919045bca5814f7ba304a3f6b4d3354036fb0"
+  integrity sha512-CoBGIUIIdrzb/xuRjlQxSQXBTyMEcPBb/JCOQ83idm4fvZ8zG1k7ke9/qAJTyOKwyEAQOTpkokP0EsA+0bpU/g==
+  dependencies:
+    "@lunit/is-intersection" "^1.0.0"
+
+"@lunit/is-intersection@^1.0.0", "@lunit/is-intersection@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@lunit/is-intersection/-/is-intersection-1.0.4.tgz#186c390c001559293f46467df2f744559945c6a0"
+  integrity sha512-bqiO7On3/Ti9N0FtfuOB2VJAVO1G91PYyiHI1YzKLo7fD+zW4hC38YFYpGKyYiH5Cjlpni5k2WCP3O9xV4EaKg==
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"
