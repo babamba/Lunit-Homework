@@ -1,12 +1,13 @@
-import React from 'react';
-import { Route, Switch, Redirect } from 'react-router-dom';
-import MainPage from 'pages/Main.page';
+import React from "react";
+import { Route, Switch } from "react-router-dom";
+import MainPage from "pages/Main.page";
+import NoMatch from "pages/NotFound";
 
 const Routes = () => {
   return (
     <Switch>
-      <Route path={['/', '/main']} exact={true} component={MainPage} />
-      <Redirect path="*" to="/" />
+      <Route path={"/"} exact={true} component={MainPage} />
+      <Route exect component={NoMatch} />
     </Switch>
   );
 };
