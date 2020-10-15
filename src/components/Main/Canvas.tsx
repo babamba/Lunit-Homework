@@ -1,18 +1,10 @@
-import React, {
-  FC,
-  useRef,
-  useState,
-  useEffect,
-  useCallback,
-  forwardRef,
-  ForwardRefRenderFunction,
-  useImperativeHandle
-} from 'react';
+import React, { FC, useRef, useState, useEffect, useCallback } from 'react';
 import { useWindowWidth, useWindowHeight } from '@react-hook/window-size';
 import styled from 'styled-components';
 import { observer } from 'mobx-react';
-import { toJS } from 'mobx';
 import { useStore } from 'hooks/useStore';
+import { Polygon, Coordinate } from 'interface/polygon';
+import { toJS } from 'mobx';
 
 const Container = styled.div`
   display: flex;
@@ -20,28 +12,10 @@ const Container = styled.div`
   cursor: pointer;
 `;
 
-interface Handler {
-  merge(): void;
-}
-
-interface Props {}
-interface Polygon {
-  key: number;
-  lines: Coordinate[];
-  moves: Coordinate[];
-  isMerged: boolean;
-}
-
-type Coordinate = {
-  x: number;
-  y: number;
-};
-
-const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
-  const { addPolygon, deletePolygon, drawItems, selectItems } = useStore('canvasStore');
-
-  const browserWidth = useWindowWidth();
-  const browserHeight = useWindowHeight();
+const Canvas: FC = () => {
+  const { addPolygon, getMaxIndex, drawItems, selectItems } = useStore('canvasStore');
+  const browserWidth = useWindowWidth(); // 브라우저 리사이징 hook
+  const browserHeight = useWindowHeight(); // 브라우저 리사이징 hook
 
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -50,12 +24,13 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
 
   const [isPainting, setIsPainting] = useState<boolean>(false);
   const [mousePosition, setMousePosition] = useState<Coordinate | undefined>(undefined);
-  const [lines, setLines] = useState<Coordinate[]>([]);
-  const [moves, setMoves] = useState<Coordinate[]>([]);
+  const [lines, setLines] = useState<Coordinate[]>([]); // 그려지는 마지막 좌표값(End X, Y)
+  const [moves, setMoves] = useState<Coordinate[]>([]); // 마우스 움직임 값(start X, Y )
 
   //MouseDown Event Listener에 사용될 callback 함수
   const startPaint = useCallback((event: MouseEvent) => {
     const coordinates = getCoordinates(event);
+
     if (coordinates) {
       setMousePosition(coordinates);
       setIsPainting(true);
@@ -67,13 +42,14 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
     async (event: MouseEvent) => {
       if (isPainting) {
         const newMousePosition = getCoordinates(event);
+
         if (mousePosition && newMousePosition) {
           await drawLine(mousePosition, newMousePosition);
           setMousePosition(newMousePosition);
         }
       }
     },
-    [isPainting, mousePosition]
+    [isPainting, mousePosition],
   );
 
   //Mouse Up&Leave Event Listener에 사용될 callback 함수
@@ -83,25 +59,22 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
     handleFinsh(); // 페인팅이 끝난 후 Store에 저장한다.
   };
 
+  // line draw가 끝난 후 저장된 line / move state 값을 저장액션(로컬스토리지 저장) 후 초기화한다.
   const handleFinsh = async () => {
-    console.log('----> [Canvas] draw finish ! ');
-    console.info('----> [Canvas] draw lines : ', lines.length);
-    console.info('----> [Canvas] draw moves : ', moves.length);
     if (!canvasRef.current || lines.length === 0) return;
     if (canvasRef.current.getContext('2d')) {
-      console.log('test @@ : ', moves[moves.length - 1].x, moves[moves.length - 1].y);
-      console.log('test @@ : ', lines[lines.length - 1].x, lines[lines.length - 1].y);
       addPolygon({
-        key: maxIndex(),
-        moves: [...moves, { x: lines[lines.length - 1].x, y: lines[lines.length - 1].y }],
-        lines: [...lines, { x: lines[0].x, y: lines[0].y }], // 끝선과 시작선을 합쳐준다.
-        isMerged: false
+        key: getMaxIndex(),
+        moves: [...moves, { x: lines[lines.length - 1].x, y: lines[lines.length - 1].y }], // 마우스 마지막 포인트를 선 마지막 점 으로 추가.
+        lines: [...lines, { x: moves[0].x, y: moves[0].y }], // 끝선과 마우스 포인트 첫점을 합쳐준다.
+        isMerged: false,
       });
       setLines([]); // state 초기화
       setMoves([]); // state 초기화
     }
   };
 
+  // Store의 Observable item이 변경(추가, 삭제) 될 시점마다 리스트를 캔버스에 그린다.
   useEffect(() => {
     redraw();
   }, [drawItems]);
@@ -119,45 +92,35 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
       if (drawItems.length > 0) {
         for (let i = 0; i < drawItems.length; i++) {
           context.beginPath();
-
           if (drawItems[i].isMerged) {
-            console.log('merged item');
-            context.strokeStyle = 'green';
+            // Merge 상태 아이템의 경우
+            context.strokeStyle = '#5634eb';
             context.fillStyle = '#FFFFFF';
-
             for (let j = 0; j < drawItems[i].lines.length; j++) {
-              // observable 목록안의 i 번째 line path을 반복
-              // moveTo 적용시  선 지점에 대한 참조가 끊어 지기 때문에 배경이 안들어감.
+              context.moveTo(drawItems[i].moves[j].x, drawItems[i].moves[j].y);
+              context.lineTo(drawItems[i].lines[j].x, drawItems[i].lines[j].y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
+            }
+            context.stroke(); // 그린다.
+            context.globalCompositeOperation = 'destination-out';
+            for (let j = 0; j < drawItems[i].lines.length; j++) {
               // context.moveTo(drawItems[i].moves[j].x, drawItems[i].moves[j].y);
               context.lineTo(drawItems[i].lines[j].x, drawItems[i].lines[j].y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
             }
-
-            context.stroke(); // 그린다.
-            context.fill();
-            console.log('merged draw end');
+            context.fill(); //배경을 넣을때는 moveTo를 할경우 경로가 끊어지기때문에 넣지않음.
+            context.globalCompositeOperation = 'source-over'; // reset
           } else {
-            console.log('not merged item');
+            // Merge 상태가 아닌 아이템의 경우
             context.strokeStyle = 'black';
             for (let j = 0; j < drawItems[i].lines.length; j++) {
               // observable 목록안의 i 번째 line path을 반복
               context.moveTo(drawItems[i].moves[j].x, drawItems[i].moves[j].y);
               context.lineTo(drawItems[i].lines[j].x, drawItems[i].lines[j].y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
             }
+            context.globalCompositeOperation = 'source-over';
             context.stroke(); // 그린다.
-            console.log('stroke draw end');
           }
         }
       }
-    }
-  };
-
-  // 아이템을 추가할때 마다, 리스트에 key의 최대값을 찾아 ++값으로 리턴.
-  const maxIndex = (): number => {
-    if (drawItems.length > 0) {
-      const max = Math.max(...drawItems.map(o => o.key));
-      return max + 1;
-    } else {
-      return 0;
     }
   };
 
@@ -179,7 +142,7 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
     if (!canvasRef.current) return;
     return {
       x: event.pageX - canvasRef.current.offsetLeft,
-      y: event.pageY - canvasRef.current.offsetTop
+      y: event.pageY - canvasRef.current.offsetTop,
     };
   };
 
@@ -189,22 +152,17 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
     const canvas: HTMLCanvasElement = canvasRef.current;
     const context = canvas.getContext('2d');
     if (context) {
-      context.strokeStyle = '#000000';
-      context.beginPath(); //새 로운 경로를 만듭니다. 경로가 생성됬다면, 이후 그리기 명령들은 경로를 구성하고 만드는데 사용하게 됩니다.
+      context.globalCompositeOperation = 'source-over';
+      context.strokeStyle = 'black';
+      context.beginPath(); //새로운 경로를 생성
       context.moveTo(originalMousePosition.x, originalMousePosition.y); // 경로에 담긴 도형은 그대로 두고, 점 (x,y)를 새 시작점으로 삽입한다.
       context.lineTo(newMousePosition.x, newMousePosition.y); //경로의 끝 점에서 (x,y)까지 직선을 경로에 추가한다.
-      // context.closePath(); //현재 하위 경로의 시작 부분과 연결된 직선을 추가합니다.
       context.stroke(); // 그린다.
-      console.log(
-        'originalMousePosition.x, originalMousePosition.y',
-        originalMousePosition.x,
-        originalMousePosition.y
-      );
-      console.log('newMousePosition.x, newMousePosition.y', newMousePosition.x, newMousePosition.y);
       await setData(newMousePosition, originalMousePosition);
     }
   };
 
+  // Line draw 값 저장.
   const setData = async (newMousePosition: Coordinate, originalMousePosition: Coordinate) => {
     setMoves([...moves, { x: originalMousePosition.x, y: originalMousePosition.y }]);
     setLines([...lines, { x: newMousePosition.x, y: newMousePosition.y }]);
@@ -216,55 +174,52 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
     setCanvasWidth(containerRef.current.offsetWidth);
   };
 
-  // 2개 이상의 Line 목록을 병합한다.
-  const mergeFindItems = async () => {
-    console.log('----> [Canvas] findMergeItems ');
-    const filterArr: Polygon[] = toJS(drawItems).filter(
-      (item: Polygon) => selectItems.indexOf(item.key) >= 0
-    );
-    console.log('----> [Canvas] filter Items : ', filterArr);
-
-    if (!canvasRef.current) return;
-    const canvas: HTMLCanvasElement = canvasRef.current;
-    const context = canvas.getContext('2d');
-
-    if (filterArr.length > 1) {
-      if (context) {
-        let mergeLines = [];
-        let mergeMoves = [];
-        // 선택 아이템들 목록의 line 배열 반복에 따른 새로운 line 배열로 구성
-        for (let i = 0; i < filterArr.length; i++) {
-          for (let j = 0; j < filterArr[i].lines.length; j++) {
-            mergeLines.push(filterArr[i].lines[j]);
-          }
-        }
-
-        for (let i = 0; i < filterArr.length; i++) {
-          for (let j = 0; j < filterArr[i].moves.length; j++) {
-            mergeMoves.push(filterArr[i].moves[j]);
-          }
-        }
-
-        await deletePolygon(toJS(selectItems) as number[]); // merge 선택요소 제거
-        // 병합 아이템 등록.
-        await addPolygon({
-          key: maxIndex(),
-          moves: mergeMoves,
-          lines: mergeLines,
-          isMerged: true
-        });
-      }
-    }
-  };
-
-  useImperativeHandle(ref, () => ({
-    merge: () => mergeFindItems()
-  }));
-
   useEffect(() => {
     if (!canvasRef.current) return;
     checkResponsive();
   }, [browserWidth, browserHeight]);
+
+  const selectedItemCheck = () => {
+    const selectedArr: Polygon[] = toJS(drawItems).filter(
+      (item: Polygon) => selectItems.indexOf(item.key) >= 0,
+    );
+    const deselectedArr: Polygon[] = toJS(drawItems).filter(
+      (item: Polygon) => selectItems.indexOf(item.key) < 0,
+    );
+
+    for (const select of selectedArr) {
+      makeArc('#34eb64', select.lines[0].x, select.lines[0].y);
+    }
+    for (const deselect of deselectedArr) {
+      makeArc('#FFFFFF', deselect.lines[0].x, deselect.lines[0].y);
+    }
+  };
+
+  const clearItemCheck = () => {
+    for (const item of drawItems) {
+      makeArc('#FFFFFF', item.lines[0].x, item.lines[0].y);
+    }
+  };
+
+  // 선택값 또는 선택하지않은값에 대한 표시 처리.
+  const makeArc = (color: string, x: number, y: number) => {
+    if (!canvasRef.current) return;
+    const canvas: HTMLCanvasElement = canvasRef.current;
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.beginPath();
+      context.moveTo(x - 40, y - 40);
+      context.arc(x - 40, y - 40, 4, 0, 2 * Math.PI, false);
+      context.fillStyle = color;
+      context.fill();
+      context.closePath();
+    }
+  };
+
+  useEffect(() => {
+    if (selectItems.length > 0) selectedItemCheck();
+    else clearItemCheck();
+  }, [selectItems]);
 
   return (
     <Container ref={containerRef}>
@@ -273,4 +228,4 @@ const Canvas: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
   );
 };
 
-export default observer(forwardRef(Canvas));
+export default observer(Canvas);

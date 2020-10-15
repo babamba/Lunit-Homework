@@ -1,8 +1,8 @@
 import { useLocalStore } from 'mobx-react-lite';
 import React, { FC, createContext, useContext } from 'react';
 
-import RootStore from '../stores/index';
-import CanvasStore from 'store/CanvasStore';
+import RootStore from 'stores/index';
+import CanvasStore from 'store/canvas/CanvasStore';
 
 export type RootStoreType = {
   canvasStore: CanvasStore;

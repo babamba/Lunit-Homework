@@ -1,4 +1,4 @@
-import CanvasStore from './CanvasStore';
+import CanvasStore from 'store/canvas/CanvasStore';
 
 // 여러가지 분류로 나뉘어 있는 Store를 하나로 combine.
 class RootStore {
