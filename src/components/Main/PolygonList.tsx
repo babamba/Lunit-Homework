@@ -4,14 +4,14 @@ import React, {
   ForwardRefRenderFunction,
   useImperativeHandle,
   useCallback,
-} from 'react';
-import styled from 'styled-components';
-import { Checkbox, Row, Col, Empty } from 'antd';
-import { observer } from 'mobx-react';
-import { CheckboxValueType } from 'antd/lib/checkbox/Group';
-import { useStore } from 'hooks/useStore';
-import { Polygon } from 'interface/polygon';
-import { toJS } from 'mobx';
+} from "react";
+import styled from "styled-components";
+import { Checkbox, Row, Col, Empty } from "antd";
+import { observer } from "mobx-react";
+import { CheckboxValueType } from "antd/lib/checkbox/Group";
+import { useStore } from "hooks/useStore";
+import { Polygon } from "interface/polygon";
+import { toJS } from "mobx";
 
 const CheckTextBox = styled.span`
   padding-left: 12px;
@@ -33,7 +33,7 @@ const PolygonList: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
     getMaxIndex,
     selectItems,
     setSelectedItem,
-  } = useStore('canvasStore');
+  } = useStore("canvasStore");
 
   // 부모요소에서 자식요소의 함수 실행
   useImperativeHandle(ref, () => ({
@@ -41,16 +41,16 @@ const PolygonList: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
     delete: async () => await deletePolygon(),
     export: () => {
       const temp = toJS(drawItems).map((item: Polygon) => item.lines);
-      console.info('--- > [PolygonList]  Export All : ', temp);
+      console.info("--- > [PolygonList]  Export All : ", temp);
     },
   }));
 
   const onHandleMerge = useCallback(async () => {
     // 2개 이상의 Line 목록을 병합한다.
 
-    console.log('----> [PolygonList] findMergeItems ');
+    // console.log('----> [PolygonList] findMergeItems ');
     const filterArr: Polygon[] = toJS(drawItems).filter(
-      (item: Polygon) => selectItems.indexOf(item.key) >= 0,
+      (item: Polygon) => selectItems.indexOf(item.key) >= 0
     );
     if (filterArr.length > 1) {
       let mergeLines = [];
@@ -80,14 +80,14 @@ const PolygonList: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
 
   const onHandleChange = useCallback(
     (values: CheckboxValueType[]) => {
-      console.log('----> [PolygonList]  checked = ', values);
+      // console.log("----> [PolygonList]  checked = ", values);
       setSelectedItem([...values] as number[]);
     },
-    [selectItems],
+    [selectItems]
   );
 
   const renderItems = useCallback(() => {
-    console.log('----> [PolygonList]  renderItems count : ', drawItems.length);
+    // console.log("----> [PolygonList]  renderItems count : ", drawItems.length);
     return drawItems.map((item: Polygon, idx: number) => (
       <Col span={24} key={idx}>
         <Checkbox value={item.key}>
@@ -97,16 +97,26 @@ const PolygonList: ForwardRefRenderFunction<Handler, Props> = (props, ref) => {
     ));
   }, [drawItems]);
 
-  useEffect(() => {
-    console.log('----> [PolygonList]  updated selectItems effect : ', toJS(selectItems));
-  }, [selectItems]);
+  // useEffect(() => {
+  //   console.log(
+  //     "----> [PolygonList]  updated selectItems effect : ",
+  //     toJS(selectItems)
+  //   );
+  // }, [selectItems]);
 
-  useEffect(() => {
-    console.log('----> [PolygonList] updated drawItems effect : ', toJS(drawItems));
-  }, [drawItems]);
+  // useEffect(() => {
+  //   console.log(
+  //     "----> [PolygonList] updated drawItems effect : ",
+  //     toJS(drawItems)
+  //   );
+  // }, [drawItems]);
 
   return (
-    <Checkbox.Group value={toJS(selectItems)} style={{ width: '100%' }} onChange={onHandleChange}>
+    <Checkbox.Group
+      value={toJS(selectItems)}
+      style={{ width: "100%" }}
+      onChange={onHandleChange}
+    >
       <Row gutter={[0, 16]}>
         {drawItems.length > 0 ? (
           renderItems()
